@@ -1,0 +1,22 @@
+Urdu-Arabic Learning Summary
+Date: October 10, 2025 15:17:46 PKT
+
+Section 1.0 - Time 0.0s to 2.0s
+Error transcribing chunk at 0.0s: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+
+Section 2.0 - Time 2.0s to 4.0s
+Error transcribing chunk at 2.0s: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+
+Section 3.0 - Time 4.0s to 6.0s
+Error transcribing chunk at 4.0s: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+
+Section 4.0 - Time 6.0s to 8.0s
+Error transcribing chunk at 6.0s: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+
+Section 5.0 - Time 8.0s to 10.0s
+Error transcribing chunk at 8.0s: 404 models/gemini-1.5-flash-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+
+Quiz: Translate these to Arabic:
+- Peace
+- Thank you
+- How are you?

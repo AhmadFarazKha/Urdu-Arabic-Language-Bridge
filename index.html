@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu-Arabic Language Bridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&family=Noto+Sans+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans Arabic', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass { backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .pulse-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .preview-text { font-family: Arial, sans-serif; line-height: 1.6; font-size: 14px; white-space: pre-wrap; }
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: none; width: 80%; max-width: 600px; border-radius: 10px; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: black; }
+        .wave { position: relative; overflow: hidden; }
+        .wave::before { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: linear-gradient(to top, #667eea, transparent); border-radius: 50% 50% 50% 50% / 60px 60px 0 0; animation: wave 3s ease-in-out infinite; }
+        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .ar-overlay { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 20px; }
+        .quiz-popup { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .dark .gradient-bg { background: linear-gradient(135deg, #1f2937 0%, #374151 100%); }
+        .dark .glass { background: rgba(31, 41, 55, 0.8); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div id="app" class="glass p-8 rounded-lg shadow-lg max-w-6xl min-h-[80vh] w-full">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Urdu-Arabic Language Bridge ✨</h1>
+            <button onclick="toggleDarkMode()" class="p-3 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 text-xl">
+                <span id="mode-icon">🌙</span>
+            </button>
+        </div>
+        <div class="mb-8">
+            <p class="text-xl mb-3">Status: <span id="status-text" class="font-bold text-2xl text-green-500">Idle</span></p>
+            <div class="w-full bg-gray-200 rounded-full h-6">
+                <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-6 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p class="text-lg text-gray-500 mt-2" id="progress-text">0% Complete</p>
+        </div>
+        <div class="grid grid-cols-1 gap-6 mb-6">
+            <button onclick="startRecording()" id="start-btn" class="bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg transition-all duration-200 text-lg w-full">🎤 Start Translation</button>
+        </div>
+        <div class="mb-6">
+            <label class="block mb-2 text-lg">Dialect: 
+                <select id="dialect-select" onchange="updateDialect(this.value)" class="ml-2 p-2 border rounded dark:bg-gray-700">
+                    <option value="gulf">Gulf (Saudi)</option>
+                    <option value="standard">Standard Arabic</option>
+                </select>
+            </label>
+        </div>
+        <div id="conversation-log" class="space-y-2 mb-6">
+            <!-- Dynamic exchanges -->
+        </div>
+        <div id="quiz-popup" class="quiz-popup fixed bottom-4 right-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg max-w-md hidden">
+            <h3 class="font-bold mb-2">Quick Quiz!</h3>
+            <div id="quiz-content" class="text-sm mb-2"></div>
+            <button onclick="closeQuiz()" class="bg-green-500 text-white px-4 py-2 rounded">Done</button>
+        </div>
+        <p class="text-sm text-gray-400 mt-6 italic">Speak Urdu—get Arabic translation & tips! 🎉</p>
+    </div>
+
+    <script>
+        let isRecording = false;
+        let mediaRecorder;
+        let darkMode = false;
+        let conversation = [];
+        let sentiment = 5;
+        let quiz = "";
+        let showQuiz = false;
+        let dialect = "gulf";
+
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark', darkMode);
+            document.getElementById('mode-icon').textContent = darkMode ? '☀️' : '🌙';
+        }
+
+        function updateDialect(newDialect) {
+            dialect = newDialect;
+        }
+
+        function updateStatus(status, progress) {
+            document.getElementById('status-text').textContent = status;
+            document.getElementById('status-text').className = `font-bold text-2xl ${status === 'Recording' ? 'text-red-500' : status === 'Processing' ? 'text-yellow-500' : 'text-green-500'}`;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = Math.round(progress) + '% Complete';
+        }
+
+        function startRecording() {
+            isRecording = true;
+            document.getElementById('start-btn').textContent = 'Recording...';
+            document.getElementById('start-btn').disabled = true;
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                const chunks = [];
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/wav' });
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const base64 = reader.result.split(',')[1];
+                        sendAudio(base64);
+                    };
+                    reader.readAsDataURL(blob);
+                    stream.getTracks().forEach(track => track.stop());
+                    isRecording = false;
+                    document.getElementById('start-btn').textContent = '🎤 Start Translation';
+                    document.getElementById('start-btn').disabled = false;
+                };
+                mediaRecorder.start();
+                setTimeout(() => mediaRecorder.stop(), 10000);  // 10s recording
+            }).catch(e => {
+                console.error('Mic error:', e);
+                document.getElementById('start-btn').textContent = '🎤 Start Translation';
+                document.getElementById('start-btn').disabled = false;
+                alert('Mic access denied - allow in browser');
+            });
+        }
+
+        async function sendAudio(base64) {
+            try {
+                const response = await fetch('/audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audio: base64 })
+                });
+                const data = await response.json();
+                conversation.push(data.result);
+                sentiment = data.sentiment;
+                quiz = data.quiz;
+                if (data.quiz) {
+                    showQuiz = true;
+                    document.getElementById('quiz-content').textContent = quiz;
+                    document.getElementById('quiz-popup').classList.remove('hidden');
+                }
+                updateConversation();
+            } catch (err) {
+                console.error('Send error:', err);
+                alert('Translation error: ' + err.message);
+            }
+        }
+
+        function updateConversation() {
+            const log = document.getElementById('conversation-log');
+            log.innerHTML = conversation.map((entry, i) => `
+                <div class="ar-overlay p-4 rounded-lg">
+                    <p class="text-lg font-bold">Exchange ${i+1} (Sentiment: ${sentiment}/10)</p>
+                    <p class="text-sm">${entry}</p>
+                </div>
+            `).join('');
+        }
+
+        function closeQuiz() {
+            showQuiz = false;
+            document.getElementById('quiz-popup').classList.add('hidden');
+        }
+
+        // Poll status
+        setInterval(async () => {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                updateStatus(data.status, data.progress);
+            } catch (err) {
+                console.error('Status fetch error:', err);
+            }
+        }, 1000);
+
+        // Initial load
+        console.log("UI loaded successfully");
+    </script>
+</body>
+</html>

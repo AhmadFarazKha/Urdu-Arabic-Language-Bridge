@@ -1,178 +1,350 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Urdu-Arabic Language Bridge</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&family=Noto+Sans+Urdu:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans Arabic', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .glass { backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .pulse-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .preview-text { font-family: Arial, sans-serif; line-height: 1.6; font-size: 14px; white-space: pre-wrap; }
-        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: none; width: 80%; max-width: 600px; border-radius: 10px; }
-        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close:hover { color: black; }
-        .wave { position: relative; overflow: hidden; }
-        .wave::before { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: linear-gradient(to top, #667eea, transparent); border-radius: 50% 50% 50% 50% / 60px 60px 0 0; animation: wave 3s ease-in-out infinite; }
-        @keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .ar-overlay { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 20px; }
-        .quiz-popup { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .dark .gradient-bg { background: linear-gradient(135deg, #1f2937 0%, #374151 100%); }
-        .dark .glass { background: rgba(31, 41, 55, 0.8); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2em; margin-bottom: 5px; }
+        .header p { opacity: 0.9; }
+        .content { padding: 30px; }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9em;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-record {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-record:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .btn-record:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .btn-clear { background: #ff6b6b; color: white; }
+        .btn-clear:hover { background: #ff5252; }
+        .status {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+        .label { font-weight: 600; color: #333; }
+        .value { color: #667eea; font-weight: 600; }
+        .msg {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+        .success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #4caf50; }
+        .error { background: #ffebee; color: #c62828; border-left: 4px solid #f44336; }
+        .results {
+            background: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+        .result-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        .result-item:last-child { margin-bottom: 0; }
+        .recording {
+            background: #ffe0e0;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+        .recording.active { display: block; }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
-<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
-    <div id="app" class="glass p-8 rounded-lg shadow-lg max-w-6xl min-h-[80vh] w-full">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">Urdu-Arabic Language Bridge ✨</h1>
-            <button onclick="toggleDarkMode()" class="p-3 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 text-xl">
-                <span id="mode-icon">🌙</span>
-            </button>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Urdu-Arabic Language Bridge</h1>
+            <p>Speak Urdu • Get Arabic Translation • Learn Instantly</p>
         </div>
-        <div class="mb-8">
-            <p class="text-xl mb-3">Status: <span id="status-text" class="font-bold text-2xl text-green-500">Idle</span></p>
-            <div class="w-full bg-gray-200 rounded-full h-6">
-                <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-6 rounded-full transition-all duration-500" style="width: 0%"></div>
+        
+        <div class="content">
+            <!-- Status -->
+            <div class="status">
+                <div class="status-item">
+                    <span class="label">Status:</span>
+                    <span class="value" id="status">Ready</span>
+                </div>
             </div>
-            <p class="text-lg text-gray-500 mt-2" id="progress-text">0% Complete</p>
+            
+            <!-- Controls -->
+            <div class="controls">
+                <div>
+                    <label for="dialect">Arabic Dialect:</label>
+                    <select id="dialect">
+                        <option value="gulf">Gulf Arabic</option>
+                        <option value="levantine">Levantine Arabic</option>
+                        <option value="egyptian">Egyptian Arabic</option>
+                        <option value="moroccan">Moroccan Arabic</option>
+                        <option value="standard">Standard Arabic</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="language">Language:</label>
+                    <select id="language">
+                        <option value="urdu">Urdu</option>
+                        <option value="punjabi">Punjabi</option>
+                        <option value="hindi">Hindi</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Buttons -->
+            <div class="buttons">
+                <button class="btn-record" id="recordBtn">🎤 Start Recording</button>
+                <button class="btn-secondary" id="pauseBtn" disabled>⏸ Pause</button>
+                <button class="btn-clear" id="clearBtn">🗑 Clear</button>
+            </div>
+            
+            <!-- Recording Indicator -->
+            <div class="recording" id="recording">
+                <span class="dot"></span> Recording...
+            </div>
+            
+            <!-- Messages -->
+            <div id="msgContainer"></div>
+            
+            <!-- Results -->
+            <div class="results">
+                <div id="resultsList">
+                    <p style="color: #999; text-align: center;">Click "Start Recording" to begin...</p>
+                </div>
+            </div>
         </div>
-        <div class="grid grid-cols-1 gap-6 mb-6">
-            <button onclick="startRecording()" id="start-btn" class="bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg transition-all duration-200 text-lg w-full">🎤 Start Translation</button>
-        </div>
-        <div class="mb-6">
-            <label class="block mb-2 text-lg">Dialect: 
-                <select id="dialect-select" onchange="updateDialect(this.value)" class="ml-2 p-2 border rounded dark:bg-gray-700">
-                    <option value="gulf">Gulf (Saudi)</option>
-                    <option value="standard">Standard Arabic</option>
-                </select>
-            </label>
-        </div>
-        <div id="conversation-log" class="space-y-2 mb-6">
-            <!-- Dynamic exchanges -->
-        </div>
-        <div id="quiz-popup" class="quiz-popup fixed bottom-4 right-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg max-w-md hidden">
-            <h3 class="font-bold mb-2">Quick Quiz!</h3>
-            <div id="quiz-content" class="text-sm mb-2"></div>
-            <button onclick="closeQuiz()" class="bg-green-500 text-white px-4 py-2 rounded">Done</button>
-        </div>
-        <p class="text-sm text-gray-400 mt-6 italic">Speak Urdu—get Arabic translation & tips! 🎉</p>
     </div>
 
     <script>
-        let isRecording = false;
         let mediaRecorder;
-        let darkMode = false;
-        let conversation = [];
-        let sentiment = 5;
-        let quiz = "";
-        let showQuiz = false;
-        let dialect = "gulf";
+        let audioChunks = [];
+        let isRecording = false;
+        let stream;
 
-        function toggleDarkMode() {
-            darkMode = !darkMode;
-            document.body.classList.toggle('dark', darkMode);
-            document.getElementById('mode-icon').textContent = darkMode ? '☀️' : '🌙';
-        }
+        const recordBtn = document.getElementById('recordBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const status = document.getElementById('status');
+        const msgContainer = document.getElementById('msgContainer');
+        const recording = document.getElementById('recording');
+        const resultsList = document.getElementById('resultsList');
 
-        function updateDialect(newDialect) {
-            dialect = newDialect;
-        }
-
-        function updateStatus(status, progress) {
-            document.getElementById('status-text').textContent = status;
-            document.getElementById('status-text').className = `font-bold text-2xl ${status === 'Recording' ? 'text-red-500' : status === 'Processing' ? 'text-yellow-500' : 'text-green-500'}`;
-            document.getElementById('progress-bar').style.width = progress + '%';
-            document.getElementById('progress-text').textContent = Math.round(progress) + '% Complete';
-        }
-
-        function startRecording() {
-            isRecording = true;
-            document.getElementById('start-btn').textContent = 'Recording...';
-            document.getElementById('start-btn').disabled = true;
-            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-                mediaRecorder = new MediaRecorder(stream);
-                const chunks = [];
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'audio/wav' });
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        const base64 = reader.result.split(',')[1];
-                        sendAudio(base64);
-                    };
-                    reader.readAsDataURL(blob);
-                    stream.getTracks().forEach(track => track.stop());
-                    isRecording = false;
-                    document.getElementById('start-btn').textContent = '🎤 Start Translation';
-                    document.getElementById('start-btn').disabled = false;
-                };
-                mediaRecorder.start();
-                setTimeout(() => mediaRecorder.stop(), 10000);  // 10s recording
-            }).catch(e => {
-                console.error('Mic error:', e);
-                document.getElementById('start-btn').textContent = '🎤 Start Translation';
-                document.getElementById('start-btn').disabled = false;
-                alert('Mic access denied - allow in browser');
-            });
-        }
-
-        async function sendAudio(base64) {
+        // Initialize audio
+        async function initAudio() {
             try {
-                const response = await fetch('/audio', {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (e) => {
+                    audioChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = processAudio;
+                return true;
+            } catch (err) {
+                showMsg(`Microphone error: ${err.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Start/Stop recording
+        recordBtn.addEventListener('click', async () => {
+            if (!stream) {
+                if (!await initAudio()) return;
+            }
+
+            if (!isRecording) {
+                audioChunks = [];
+                mediaRecorder.start();
+                isRecording = true;
+                recordBtn.textContent = '⏹ Stop Recording';
+                recordBtn.style.background = '#ff6b6b';
+                pauseBtn.disabled = false;
+                recording.classList.add('active');
+                status.textContent = 'Recording...';
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.textContent = '🎤 Start Recording';
+                recordBtn.style.background = '';
+                pauseBtn.disabled = true;
+                recording.classList.remove('active');
+                status.textContent = 'Processing...';
+            }
+        });
+
+        // Process audio
+        async function processAudio() {
+            try {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const reader = new FileReader();
+
+                reader.onload = async (e) => {
+                    const base64 = e.target.result.split(',')[1];
+                    await sendToServer(base64);
+                };
+
+                reader.readAsDataURL(audioBlob);
+            } catch (err) {
+                showMsg(`Error: ${err.message}`, 'error');
+                status.textContent = 'Ready';
+            }
+        }
+
+        // Send to server
+        async function sendToServer(base64Audio) {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/process', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ audio: base64 })
+                    body: JSON.stringify({
+                        audio: base64Audio,
+                        dialect: document.getElementById('dialect').value
+                    })
                 });
+
                 const data = await response.json();
-                conversation.push(data.result);
-                sentiment = data.sentiment;
-                quiz = data.quiz;
-                if (data.quiz) {
-                    showQuiz = true;
-                    document.getElementById('quiz-content').textContent = quiz;
-                    document.getElementById('quiz-popup').classList.remove('hidden');
+
+                if (data.status === 'success') {
+                    addResult(data.result);
+                    showMsg('✓ Translation complete!', 'success');
+                    status.textContent = 'Ready';
+                } else {
+                    showMsg(`Error: ${data.error}`, 'error');
+                    status.textContent = 'Ready';
                 }
-                updateConversation();
             } catch (err) {
-                console.error('Send error:', err);
-                alert('Translation error: ' + err.message);
+                showMsg(`Server error: ${err.message}. Make sure Flask is running!`, 'error');
+                status.textContent = 'Error';
             }
         }
 
-        function updateConversation() {
-            const log = document.getElementById('conversation-log');
-            log.innerHTML = conversation.map((entry, i) => `
-                <div class="ar-overlay p-4 rounded-lg">
-                    <p class="text-lg font-bold">Exchange ${i+1} (Sentiment: ${sentiment}/10)</p>
-                    <p class="text-sm">${entry}</p>
-                </div>
-            `).join('');
+        // Add result to UI
+        function addResult(result) {
+            const html = `<div class="result-item">${escapeHtml(result)}</div>`;
+            if (resultsList.innerHTML.includes('Click "Start Recording')) {
+                resultsList.innerHTML = html;
+            } else {
+                resultsList.innerHTML = html + resultsList.innerHTML;
+            }
         }
 
-        function closeQuiz() {
-            showQuiz = false;
-            document.getElementById('quiz-popup').classList.add('hidden');
+        // Show message
+        function showMsg(text, type) {
+            msgContainer.innerHTML = `<div class="msg ${type}">${text}</div>`;
+            setTimeout(() => { msgContainer.innerHTML = ''; }, 4000);
         }
 
-        // Poll status
-        setInterval(async () => {
+        // Clear history
+        clearBtn.addEventListener('click', async () => {
             try {
-                const response = await fetch('/status');
-                const data = await response.json();
-                updateStatus(data.status, data.progress);
+                await fetch('http://127.0.0.1:5000/clear', { method: 'POST' });
+                resultsList.innerHTML = '<p style="color: #999; text-align: center;">History cleared...</p>';
+                showMsg('History cleared!', 'success');
             } catch (err) {
-                console.error('Status fetch error:', err);
+                showMsg(`Clear error: ${err.message}`, 'error');
             }
-        }, 1000);
+        });
 
-        // Initial load
-        console.log("UI loaded successfully");
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        showMsg('✓ Ready! Click "Start Recording"', 'success');
     </script>
 </body>
 </html>
